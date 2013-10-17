@@ -117,8 +117,7 @@ class BookScanner(QtGui.QMainWindow):
       self.update_controls_states()
 
       self.thread_left = Thread(self.load_left)
-      self.connect(self.thread_left,
-        QtCore.SIGNAL('loaded_left()'), self.render_left, QtCore.Qt.QueuedConnection)
+      self.thread_left.finished.connect(self.render_left)
 
   def shoot_right(self):
     if self.validate_cameras(2) and self.validate_directory() and self.validate_filename_right():
@@ -126,8 +125,7 @@ class BookScanner(QtGui.QMainWindow):
       self.update_controls_states()
 
       self.thread_right = Thread(self.load_right)
-      self.connect(self.thread_right,
-        QtCore.SIGNAL('loaded_right()'), self.render_right, QtCore.Qt.QueuedConnection)
+      self.thread_right.finished.connect(self.render_right)
 
   def validate_cameras(self, n):
     if len(gphoto2.devices()) < n:
@@ -179,7 +177,6 @@ class BookScanner(QtGui.QMainWindow):
   def load_left(self):
     gphoto2.devices()[0].capture(self.path_left('%C'))
     self._exec('convert "{0}" -rotate 270 "{0}"'.format(self.path_left('jpg')))
-    self.thread_left.emit(QtCore.SIGNAL('loaded_left()'))
 
   def render_left(self):
     self.left_camera_is_free = True
@@ -193,7 +190,6 @@ class BookScanner(QtGui.QMainWindow):
   def load_right(self):
     gphoto2.devices()[1].capture(self.path_right('%C'))
     self._exec('convert "{0}" -rotate 90 "{0}"'.format(self.path_right('jpg')))
-    self.thread_right.emit(QtCore.SIGNAL('loaded_right()'))
 
   def render_right(self):
     self.right_camera_is_free = True
