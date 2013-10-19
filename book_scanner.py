@@ -25,7 +25,7 @@ class Thread(QtCore.QThread):
   def run(self):
     self.func(*self.args, **self.kwargs)
 
-class BookScanner(QtGui.QMainWindow):
+class BookScanner(QtGui.QWidget):
   @staticmethod
   def _exec(cmd):
     return subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf-8')
@@ -34,11 +34,10 @@ class BookScanner(QtGui.QMainWindow):
     super(BookScanner, self).__init__()
 
     self.working_directory = os.path.dirname(os.path.realpath(__file__))
+    self.current_directory = None
 
     self.left_camera_is_free = True
     self.right_camera_is_free = True
-
-    self.current_directory = None
 
     self.setWindowTitle('BookScanner')
     self.setWindowIcon(QtGui.QIcon('{0}/icon.png'.format(self.working_directory)))
@@ -50,57 +49,80 @@ class BookScanner(QtGui.QMainWindow):
     self.move(fg.topLeft())
 
     self.background = QtGui.QLabel(self)
-    self.background.setGeometry(0, 0, 4000, 2000)
+    self.background.setGeometry(0, 0, 9999, 9999)
     self.background.setStyleSheet('background-image: url({0}/background.png)'.format(self.working_directory))
 
-    self.logo = QtGui.QLabel(self)
-    self.logo.setGeometry(30, 30, 170, 100)
+    self.layout = QtGui.QVBoxLayout()
+    self.layout.setContentsMargins(30, 30, 30, 30)
+
+    self.header = QtGui.QWidget()
+    self.header.setFixedSize(1130, 100)
+
+    self.logo = QtGui.QLabel(self.header)
+    self.logo.setGeometry(0, 0, 170, 100)
     self.logo.setStyleSheet('background-image: url({0}/logo.png)'.format(self.working_directory))
 
-    self.directory_btn = QtGui.QPushButton('Select directory', self)
-    self.directory_btn.setGeometry(230, 30, 200, 30)
+    self.directory_btn = QtGui.QPushButton('Select directory', self.header)
+    self.directory_btn.setGeometry(200, 0, 200, 30)
     self.directory_btn.clicked.connect(self.select_directory)
 
-    self.directory_lbl = QtGui.QLabel(self)
-    self.directory_lbl.setGeometry(460, 30, 400, 30)
+    self.directory_lbl = QtGui.QLabel(self.header)
+    self.directory_lbl.setGeometry(430, 0, 400, 30)
 
-    self.automatic_numeration_box = QtGui.QCheckBox(self)
-    self.automatic_numeration_box.setGeometry(890, 30, 30, 30)
+    self.automatic_numeration_box = QtGui.QCheckBox(self.header)
+    self.automatic_numeration_box.setGeometry(860, 0, 30, 30)
 
-    self.automatic_numeration_lbl = QtGui.QLabel('Automatic numbering', self)
-    self.automatic_numeration_lbl.setGeometry(920, 30, 200, 30)
+    self.automatic_numeration_lbl = QtGui.QLabel('Automatic numbering', self.header)
+    self.automatic_numeration_lbl.setGeometry(890, 0, 200, 30)
 
-    self.filename_left_lbl = QtGui.QLabel('Filename for left camera:', self)
-    self.filename_left_lbl.setGeometry(230, 90, 220, 30)
+    self.filename_left_lbl = QtGui.QLabel('Filename for left camera:', self.header)
+    self.filename_left_lbl.setGeometry(200, 60, 220, 30)
 
-    self.filename_left_field = QtGui.QLineEdit(self)
-    self.filename_left_field.setGeometry(450, 90, 220, 30)
+    self.filename_left_field = QtGui.QLineEdit(self.header)
+    self.filename_left_field.setGeometry(420, 60, 220, 30)
 
-    self.filename_right_lbl = QtGui.QLabel('Filename for right camera:', self)
-    self.filename_right_lbl.setGeometry(700, 90, 220, 30)
+    self.filename_right_lbl = QtGui.QLabel('Filename for right camera:', self.header)
+    self.filename_right_lbl.setGeometry(670, 60, 220, 30)
 
-    self.filename_right_field = QtGui.QLineEdit(self)
-    self.filename_right_field.setGeometry(920, 90, 220, 30)
+    self.filename_right_field = QtGui.QLineEdit(self.header)
+    self.filename_right_field.setGeometry(890, 60, 220, 30)
+
+    self.layout.addWidget(self.header)
+
+    self.body = QtGui.QWidget()
+
+    self.body_layout = QtGui.QHBoxLayout()
 
     self.image_left = ImageViewer(self)
-    self.image_left.setGeometry(30, 160, 550, 460)
+    self.body_layout.addWidget(self.image_left)
 
     self.image_right = ImageViewer(self)
-    self.image_right.setGeometry(610, 160, 550, 460)
+    self.body_layout.addWidget(self.image_right)
 
-    self.shoot_btn = QtGui.QPushButton('Make photos', self)
-    self.shoot_btn.setGeometry(30, 650, 200, 30)
+    self.body.setLayout(self.body_layout)
+
+    self.layout.addWidget(self.body)
+
+    self.footer = QtGui.QWidget()
+    self.footer.setFixedSize(660, 30)
+
+    self.shoot_btn = QtGui.QPushButton('Make photos', self.footer)
+    self.shoot_btn.setGeometry(0, 0, 200, 30)
     self.shoot_btn.clicked.connect(self.shoot)
 
     QtGui.QShortcut(QtGui.QKeySequence('Space'), self, self.shoot)
 
-    self.shoot_left_btn = QtGui.QPushButton('Make left photo', self)
-    self.shoot_left_btn.setGeometry(260, 650, 200, 30)
+    self.shoot_left_btn = QtGui.QPushButton('Make left photo', self.footer)
+    self.shoot_left_btn.setGeometry(230, 0, 200, 30)
     self.shoot_left_btn.clicked.connect(self.shoot_left)
 
-    self.shoot_right_btn = QtGui.QPushButton('Make right photo', self)
-    self.shoot_right_btn.setGeometry(490, 650, 200, 30)
+    self.shoot_right_btn = QtGui.QPushButton('Make right photo', self.footer)
+    self.shoot_right_btn.setGeometry(460, 0, 200, 30)
     self.shoot_right_btn.clicked.connect(self.shoot_right)
+
+    self.layout.addWidget(self.footer)
+
+    self.setLayout(self.layout)
 
   def select_directory(self):
     self.current_directory = QtGui.QFileDialog.getExistingDirectory(self, 'Select directory')
