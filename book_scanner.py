@@ -133,6 +133,9 @@ class BookScanner(QtGui.QWidget):
       self.shoot_left()
       self.shoot_right()
 
+      self.left_step = 2
+      self.right_step = 2
+
   def shoot_left(self):
     if self.validate_cameras(1) and self.validate_directory() and self.validate_filename_left():
       self.left_camera_is_free = False
@@ -141,6 +144,8 @@ class BookScanner(QtGui.QWidget):
       self.thread_left = Thread(self.load_left)
       self.thread_left.finished.connect(self.render_left)
 
+      self.left_step = 1
+
   def shoot_right(self):
     if self.validate_cameras(2) and self.validate_directory() and self.validate_filename_right():
       self.right_camera_is_free = False
@@ -148,6 +153,8 @@ class BookScanner(QtGui.QWidget):
 
       self.thread_right = Thread(self.load_right)
       self.thread_right.finished.connect(self.render_right)
+
+      self.right_step = 1
 
   def validate_cameras(self, n):
     if len(gphoto2.devices()) < n:
@@ -207,7 +214,7 @@ class BookScanner(QtGui.QWidget):
     self.image_left.configure(self.path_left('jpg'), 0.25)
 
     if self.automatic_numeration_box.isChecked():
-      self.filename_left_field.setText(self.next_filename(self.filename_left_field.text()))
+      self.filename_left_field.setText(self.next_filename(self.filename_left_field.text(), self.left_step))
 
   def load_right(self):
     gphoto2.devices()[1].capture(self.path_right('%C'))
@@ -220,7 +227,7 @@ class BookScanner(QtGui.QWidget):
     self.image_right.configure(self.path_right('jpg'), 0.25)
 
     if self.automatic_numeration_box.isChecked():
-      self.filename_right_field.setText(self.next_filename(self.filename_right_field.text()))
+      self.filename_right_field.setText(self.next_filename(self.filename_right_field.text(), self.right_step))
 
   def path_left(self, format):
     return '{0}/{1}.{2}'.format(self.current_directory, self.filename_left_field.text(), format)
@@ -228,11 +235,11 @@ class BookScanner(QtGui.QWidget):
   def path_right(self, format):
     return '{0}/{1}.{2}'.format(self.current_directory, self.filename_right_field.text(), format)
 
-  def next_filename(self, filename):
+  def next_filename(self, filename, step):
     match = re.search('^\d+', filename)
 
     if match:
-      return str(int(match.group(0)) + 2).rjust(len(match.group(0)), '0')
+      return str(int(match.group(0)) + step).rjust(len(match.group(0)), '0')
     else:
       return filename
 
